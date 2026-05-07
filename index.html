@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+<title>Typing App</title>
+<link rel="stylesheet" href="style.css"/>
+</head>
+
+<body>
+
+<div class="topbar">
+  <div class="modes">
+    <button onclick="setMode('words')">Words</button>
+    <button onclick="setMode('sentences')">Sentences</button>
+    <button onclick="setMode('one')">1 Word</button>
+  </div>
+
+  <div class="controls">
+    <button onclick="toggleKeyboard()">Keyboard</button>
+    <button onclick="resetTest()">Restart</button>
+  </div>
+</div>
+
+<div class="container">
+
+  <div class="stats">
+    <div>WPM: <span id="wpm">0</span></div>
+    <div>Accuracy: <span id="acc">100</span>%</div>
+  </div>
+
+  <div class="textBox" id="textDisplay"></div>
+
+  <input id="input" class="input" placeholder="Start typing..." />
+
+  <canvas id="graph"></canvas>
+
+</div>
+
+<!-- keyboard container -->
+<div id="keyboard" class="keyboard hidden"></div>
+
+<!-- SCRIPTS (ORDER MATTERS) -->
+<script src="script.js"></script>
+<script src="keyboard.js"></script>
+
+</body>
+</html>
