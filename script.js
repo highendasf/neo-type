@@ -1,109 +1,70 @@
-let mode = "words";
-let text = "";
-let startTime = null;
-let correct = 0;
-let total = 0;
+let mode = "words"; let text = ""; let startTime = null;
 
-const words = ["hello", "world", "typing", "speed", "code", "javascript"];
-const sentences = [
-  "hello world this is a test",
-  "typing speed improves with practice",
-  "focus and consistency is key"
-];
+const words = [ "speed","typing","keyboard","focus","react","javascript","accuracy","practice","flow","clean","code","build","system","design","modern","interface", "development","engine","performance","algorithm","function","variable","object","array","string","boolean","loop","condition","event","listener", "state","component","render","hook","effect","context","module","export","import","async","await","promise","thread","process","memory", "network","server","client","database","query","response","request","api","json","html","css","frontend","backend","fullstack","debug" ];
 
-const display = document.getElementById("textDisplay");
-const input = document.getElementById("input");
-const wpmEl = document.getElementById("wpm");
-const accEl = document.getElementById("acc");
-const graph = document.getElementById("graph");
-const ctx = graph.getContext("2d");
+const sentences = [ "focus on accuracy before speed", "practice every day to improve typing skills", "clean code leads to better performance", "consistency builds mastery over time", "slow is smooth and smooth is fast" ];
 
-let historyWPM = [];
-let historyACC = [];
+const display = document.getElementById("textDisplay"); const input = document.getElementById("input"); const wpmEl = document.getElementById("wpm"); const accEl = document.getElementById("acc"); const canvas = document.getElementById("graph"); const ctx = canvas.getContext("2d");
 
-function setMode(m) {
-  mode = m;
-  resetTest();
+let historyWPM = []; let historyACC = [];
+
+// gamification let xp = Number(localStorage.getItem("xp") || 0); let level = Number(localStorage.getItem("level") || 1); let weakWords = JSON.parse(localStorage.getItem("weakWords") || "{}");
+
+let caretIndex = 0;
+
+function setMode(m){ mode = m; resetTest(); }
+
+function generate(){ if(mode === "words"){ text = Array.from({length: 30}, () => words[Math.floor(Math.random()*words.length)]).join(" "); } else if(mode === "sentences"){ text = sentences[Math.floor(Math.random()*sentences.length)]; } else { text = words[Math.floor(Math.random()*words.length)]; }
+
+caretIndex = 0; renderText(); }
+
+function renderText(){ display.innerHTML = text.split("").map((c,i)=> <span class='char' id='c${i}'>${c}</span> ).join(""); }
+
+generate();
+
+input.addEventListener("input", () => { if(!startTime) startTime = Date.now();
+
+let typed = input.value; let chars = display.querySelectorAll("span");
+
+let correct = 0; let wordErrors = {}; let currentWord = ""; let wordIndex = 0;
+
+for(let i=0;i<chars.length;i++){ let c = chars[i];
+
+if(typed[i] == null){ c.style.color = "#666"; } else if(typed[i] === c.innerText){ c.style.color = "#4ade80"; correct++; } else { c.style.color = "#ef4444"; currentWord += text[i]; if(text[i] === " "){ wordErrors[currentWord.trim()] = (wordErrors[currentWord.trim()] || 0) + 1; currentWord = ""; } } if(text[i] === " ") wordIndex++; 
+
 }
 
-function generateText() {
-  if (mode === "words") {
-    text = Array.from({length: 20}, () =>
-      words[Math.floor(Math.random() * words.length)]
-    ).join(" ");
-  }
+let acc = typed.length ? Math.floor((correct/typed.length)*100) : 100; let time = (Date.now()-startTime)/60000 || 1;
 
-  if (mode === "sentences") {
-    text = sentences[Math.floor(Math.random() * sentences.length)];
-  }
+let wpm = Math.floor((correct/5)/time); let raw = Math.floor((typed.length/5)/time);
 
-  if (mode === "one") {
-    text = words[Math.floor(Math.random() * words.length)];
-  }
+wpmEl.innerText = wpm; accEl.innerText = acc;
 
-  display.innerText = text;
-}
+historyWPM.push(wpm); historyACC.push(acc);
 
-generateText();
+drawGraph();
 
-input.addEventListener("input", () => {
-  if (!startTime) startTime = Date.now();
+// XP system xp += Math.floor(wpm/10); if(xp > level*100){ level++; xp = 0; }
 
-  const typed = input.value;
-  total = typed.length;
+localStorage.setItem("xp", xp); localStorage.setItem("level", level);
 
-  correct = 0;
-  for (let i = 0; i < typed.length; i++) {
-    if (typed[i] === text[i]) correct++;
-  }
+// weak words tracking Object.keys(wordErrors).forEach(w=>{ weakWords[w] = (weakWords[w]||0)+1; });
 
-  let acc = total === 0 ? 100 : Math.floor((correct / total) * 100);
+localStorage.setItem("weakWords", JSON.stringify(weakWords));
 
-  let time = (Date.now() - startTime) / 60000;
-  let wpm = Math.floor((correct / 5) / time) || 0;
+if(typed === text) setTimeout(resetTest, 800); });
 
-  wpmEl.innerText = wpm;
-  accEl.innerText = acc;
+function resetTest(){ input.value = ""; startTime = null; historyWPM = []; historyACC = []; generate(); }
 
-  historyWPM.push(wpm);
-  historyACC.push(acc);
+function drawGraph(){ ctx.clearRect(0,0,canvas.width,canvas.height);
 
-  drawGraph();
+ctx.strokeStyle="#1a1a1a"; for(let i=0;i<10;i++){ ctx.beginPath(); ctx.moveTo(0,i12); ctx.lineTo(600,i12); ctx.stroke(); }
 
-  if (typed === text) {
-    setTimeout(resetTest, 700);
-  }
-});
+function smooth(data){ return data.map((v,i,a)=>(a[i-1]+v)/2 || v); }
 
-function resetTest() {
-  input.value = "";
-  startTime = null;
-  correct = 0;
-  total = 0;
-  historyWPM = [];
-  historyACC = [];
-  generateText();
-  drawGraph();
-}
+let w = smooth(historyWPM); let a = smooth(historyACC);
 
-function drawGraph() {
-  ctx.clearRect(0, 0, graph.width, graph.height);
+ctx.beginPath(); ctx.strokeStyle="cyan"; w.forEach((v,i)=>ctx.lineTo(i*5,120-v)); ctx.stroke();
 
-  ctx.beginPath();
-  ctx.strokeStyle = "cyan";
+ctx.beginPath(); ctx.strokeStyle="lime"; a.forEach((v,i)=>ctx.lineTo(i*5,120-v)); ctx.stroke(); }
 
-  historyWPM.forEach((v, i) => {
-    ctx.lineTo(i * 5, 150 - v);
-  });
-
-  ctx.stroke();
-
-  ctx.beginPath();
-  ctx.strokeStyle = "lime";
-
-  historyACC.forEach((v, i) => {
-    ctx.lineTo(i * 5, 150 - v);
-  });
-
-  ctx.stroke();
-}
